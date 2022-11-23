@@ -1,5 +1,8 @@
 use crate::NumberSearchResult::NumberNotFound;
+use num_bigint::BigUint;
 use std::fmt::{Display, Formatter};
+use std::mem::replace;
+use std::time::SystemTime;
 
 // limit for fibonacci number calculation
 static LIMIT: u128 = 1_000_000;
@@ -31,26 +34,31 @@ impl Display for NumberSearchResult {
 }
 
 fn main() {
+    let start = SystemTime::now(); // take a timestamp at the start of the program
     let fib_vec = fib(1000, LIMIT); // create fibonacci number vector with n = 1000 OR up until the LIMIT
     println!("{:?}", fib_vec); // print the list
     print_if_in_fib_series(55, &fib_vec); // find a specific number in the list if it exists
 
     let range_bottom = 0; // range for starting sum checking
-    let range_range = 20; // how many numbers on top of the bottom to do a summation of
+    let range_range = 10000; // how many numbers on top of the bottom to do a summation of
+
+    // println!("Big fib number: {}", _fib_specific(1_000_000));
 
     // loop for showing the series of each natural number
-    for n in range_bottom..range_bottom + range_range {
+    for n in range_bottom..=range_bottom + range_range {
         let sum_series = find_sum_of_fib(n, &fib_vec); // generate the sum series
         let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
 
         if n != sum {
             panic!("sum not equal to fib number to check");
         } // this should never run under any circumstances, but useful just incase :)
-
-        println!("Series: {:?}", sum_series); // print the series
-
         println!("Sum of series: {}", sum); // print the sum of the series
+        println!("Series ^: {:?}\n", sum_series); // print the series
     }
+    let end = SystemTime::now(); // take a timestamp at the end of the program.
+
+    let diff = end.duration_since(start).unwrap(); // calculate difference of time between beginning of the program and end
+    println!("Program took {} seconds to run.", diff.as_secs_f64());
 }
 
 /// Finds the series of sums of fib numbers to create the given number
@@ -125,6 +133,20 @@ fn find_fib_series(
         }
     }
     Err(NumberNotFound) // number was not found
+}
+
+/// Finds specific fibonacci number given an index, uses BigUint so it can be a massive number
+fn _fib_specific(n: usize) -> BigUint {
+    let mut a0: BigUint = BigUint::from(0_u32);
+    let mut a1: BigUint = BigUint::from(1_u32);
+
+    for _ in 0..n {
+        let a2 = a0 + &a1;
+
+        a0 = replace(&mut a1, a2);
+    }
+
+    a0
 }
 
 /// Create a Fibonacci list of numbers with up to 1000 numbers, comparing each number to limit and returning  if the number would exceed limit
