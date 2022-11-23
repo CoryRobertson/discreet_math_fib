@@ -1,11 +1,11 @@
-use crate::NumberSearchResult::{NumberExceededLimit, NumberFound, NumberNotFound};
+use crate::NumberSearchResult::{_NumberFound, NumberExceededLimit, NumberExceededSumOfFib, NumberNotFound};
 use num_bigint::BigUint;
 use std::fmt::{Display, Formatter};
 use std::io::{stdin};
 use std::mem::replace;
 use std::time::SystemTime;
 
-// limit for fibonacci number calculation
+// limit for fibonacci number calculation imposed by assignment
 static LIMIT: u128 = 1_000_000;
 
 // type def for contents of the fibonacci list
@@ -16,9 +16,10 @@ type FibList = Vec<FibContents>;
 // enum for finding a number in the fibonacci list
 #[derive(Debug)]
 enum NumberSearchResult {
-    NumberFound(FibContents),
-    NumberNotFound,
-    NumberExceededLimit,
+    _NumberFound(FibContents), // number was found, shouldn't be used most likely
+    NumberNotFound, // number was somehow not able to be found
+    NumberExceededLimit, // number was larger than the limit imposed by the assignment
+    NumberExceededSumOfFib, // number was larger than the sum of the list, making it impossible to make
 }
 
 // display implementation for enum
@@ -31,17 +32,19 @@ impl Display for NumberSearchResult {
             NumberExceededLimit => {
                 write!(f, "Number exceeded limit")
             }
-            _ => { write!(f, "Number was found") }
+            _NumberFound(num) => { write!(f, "Number was found: {}", num) }
+
+            NumberExceededSumOfFib => { write!(f, "Number exceeded sum of fib numbers up to limit") }
         }
     }
 }
 
 fn main() {
-    let start = SystemTime::now(); // take a timestamp at the start of the program
+
     let fib_vec = fib(1000, LIMIT); // create fibonacci number vector with n = 1000 OR up until the LIMIT
     println!("{:?}", fib_vec); // print the list
-
-    find_sum_of_fib(999_999,&fib_vec).unwrap();
+    let fib_sum: FibContents = fib_vec.iter().sum();
+    println!("sum of fib: {}", fib_sum); // print the list
 
     { // a scope us used here so we never accidentally reuse the search_fib variable
         let msg = "Input a valid number to search for in the fibonacci sequence: ";
@@ -63,36 +66,45 @@ fn main() {
             }
         }
 
-    }
+    } // block for  allowing the user to display the sum of fibs for a number
 
     println!();
 
-    // #[cfg(debug_assertions)]
-    // {
-    //     let range_bottom = 0; // range for starting sum checking
-    //     let range_range = 1; // how many numbers on top of the bottom to do a summation of
-    //
-    //     // println!("Big fib number: {}", _fib_specific(1_000_000));
-    //
-    //     // loop for showing the series of each natural number
-    //     for n in range_bottom..=range_bottom + range_range {
-    //         let sum_series = find_sum_of_fib(n, &fib_vec); // generate the sum series
-    //         let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
-    //
-    //         if n != sum {
-    //             panic!("sum not equal to fib number to check");
-    //         } // this should never run under any circumstances, but useful just incase :)
-    //         println!("Sum of series: {}", sum); // print the sum of the series
-    //         println!("Series ^: {:?}\n", sum_series); // print the series
-    //     }
-    // }
+    let _start = SystemTime::now(); // take a timestamp at the _start of the program for speed testing
 
-    let end = SystemTime::now(); // take a timestamp at the end of the program.
+    #[cfg(debug_assertions)]
+    {
+        let range_bottom = 0; // range for starting sum checking
+        let range_range = LIMIT - 1; // how many numbers on top of the bottom to do a summation of
 
-    let diff = end.duration_since(start).unwrap(); // calculate difference of time between beginning of the program and end
-    println!("Program took {} seconds to run.", diff.as_secs_f64());
+        // println!("Big fib number: {}", _fib_specific(1_000_000));
+
+        // loop for showing the series of each natural number
+        for n in range_bottom..=range_bottom + range_range {
+            let sum_series = find_sum_of_fib(n, &fib_vec).unwrap(); // generate the sum series
+            let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
+
+            if n != sum {
+                panic!("sum not equal to fib number to check");
+            } // this should never run under any circumstances, but useful just incase :)
+            println!("Sum of series: {}", sum); // print the sum of the series
+            println!("Series ^: {:?}\n", sum_series); // print the series
+        }
+    } // debug block to print and test each number from 0 to (LIMIT - 1) for being able to be made from sum of fibs
+
+    #[cfg(debug_assertions)]
+    {
+        let end = SystemTime::now(); // take a timestamp at the end of the program.
+
+        let diff = end.duration_since(_start).unwrap(); // calculate difference of time between beginning of the program and end
+
+        println!("Program took {} seconds to run.", diff.as_secs_f64());
+
+    } // debug block to show print time of all fib numbers,
 }
 
+/// Request user input until they input a valid FibContents.
+/// Prints message each time they fail :)
 fn badger_user_for_number(message: &str) -> FibContents {
     return loop { // number to search for is looped upon until we have a working number of type FibContents
         let mut input = String::new();
@@ -120,12 +132,24 @@ fn badger_user_for_number(message: &str) -> FibContents {
 
 /// Finds the series of sums of fib numbers to create the given number
 fn find_sum_of_fib(number: FibContents, fib_vec: &FibList) -> Result<Vec<FibContents>,NumberSearchResult> {
-    if fib_vec.contains(&number) || number == 0 {
-        return Ok(vec![number]);
-    }
-    if number >= LIMIT {
-        return Err(NumberExceededLimit);
-    }
+
+    {
+        // includes:
+        // number already is a fib number,
+        // number is larger than imposed limit,
+        // number is larger than the sum of all the fib numbers, should not happen if limit is lower than it, but I plan on making limit higher
+        if fib_vec.contains(&number) || number == 0 {
+            return Ok(vec![number]);
+        } // number is a fibonacci number already
+        if number >= LIMIT {
+            let sum_of_fib: FibContents = fib_vec.iter().sum();
+            if sum_of_fib < number { // nested error return so we can find out why the number failed and display to user. :)
+                return Err(NumberExceededSumOfFib)
+            } // number is larger than any of the numbers
+            return Err(NumberExceededLimit);
+        } // number exceeds limit
+
+    } // sanity checks, run once only
 
     let mut copy_list = fib_vec.clone(); // a list we can modify throughout the function.
     let mut sum = number; // the sum we are going to work with.
@@ -141,7 +165,7 @@ fn find_sum_of_fib(number: FibContents, fib_vec: &FibList) -> Result<Vec<FibCont
                     *copy_list.get(index - 1).unwrap()
                 }
             };
-            if current_number >= &sum {
+            if current_number >= &sum || (index == copy_list.len() - 1) {
                 // always go to the previous number once we go one number higher than the sum.
                 // if we have found the number in the fibonacci sequence that is larger than the number we are trying to make
                 list_of_sums.push(previous_number);
@@ -160,15 +184,13 @@ fn find_sum_of_fib(number: FibContents, fib_vec: &FibList) -> Result<Vec<FibCont
         // println!("list of sums: {:?}", list_of_sums);
 
         if sum == 0 {
-            break;
+            return Ok(list_of_sums.clone());
         } // once the sum is 0, we have all the numbers to make up the number in the list_of_sums vector
 
         if copy_list.is_empty() {
-            break;
+            return Err(NumberNotFound);
         } // this should never run, unless the number somehow cant be made from the list.
     } // once this loop concludes, we have found our list_of_sums
-
-    Ok(list_of_sums)
 }
 
 /// Print a number if it exists in the fibonacci list, if not, print another message
