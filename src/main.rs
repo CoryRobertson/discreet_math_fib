@@ -1,7 +1,9 @@
-use crate::NumberSearchResult::{_NumberFound, NumberExceededLimit, NumberExceededSumOfFib, NumberNotFound};
+use crate::NumberSearchResult::{
+    NumberExceededLimit, NumberExceededSumOfFib, NumberNotFound, _NumberFound,
+};
 use num_bigint::BigUint;
 use std::fmt::{Display, Formatter};
-use std::io::{stdin};
+use std::io::stdin;
 use std::mem::replace;
 use std::time::SystemTime;
 
@@ -17,8 +19,8 @@ type FibList = Vec<FibContents>;
 #[derive(Debug)]
 enum NumberSearchResult {
     _NumberFound(FibContents), // number was found, shouldn't be used most likely
-    NumberNotFound, // number was somehow not able to be found
-    NumberExceededLimit, // number was larger than the limit imposed by the assignment
+    NumberNotFound,            // number was somehow not able to be found
+    NumberExceededLimit,       // number was larger than the limit imposed by the assignment
     NumberExceededSumOfFib, // number was larger than the sum of the list, making it impossible to make
 }
 
@@ -32,21 +34,25 @@ impl Display for NumberSearchResult {
             NumberExceededLimit => {
                 write!(f, "Number exceeded limit")
             }
-            _NumberFound(num) => { write!(f, "Number was found: {}", num) }
+            _NumberFound(num) => {
+                write!(f, "Number was found: {}", num)
+            }
 
-            NumberExceededSumOfFib => { write!(f, "Number exceeded sum of fib numbers up to limit") }
+            NumberExceededSumOfFib => {
+                write!(f, "Number exceeded sum of fib numbers up to limit")
+            }
         }
     }
 }
 
 fn main() {
-
     let fib_vec = fib(1000, LIMIT); // create fibonacci number vector with n = 1000 OR up until the LIMIT
     println!("{:?}", fib_vec); // print the list
     let fib_sum: FibContents = fib_vec.iter().sum();
     println!("sum of fib: {}", fib_sum); // print the list
 
-    { // a scope us used here so we never accidentally reuse the search_fib variable
+    {
+        // a scope us used here so we never accidentally reuse the search_fib variable
         let msg = "Input a valid number to search for in the fibonacci sequence: ";
         let search_fib: FibContents = badger_user_for_number(msg);
         print_if_in_fib_series(search_fib, &fib_vec); // find a specific number in the list if it exists
@@ -55,7 +61,7 @@ fn main() {
     {
         let msg = "Input a number to make sum of fibonacci numbers: ";
         let break_fib = badger_user_for_number(msg);
-        match find_sum_of_fib(break_fib,&fib_vec) {
+        match find_sum_of_fib(break_fib, &fib_vec) {
             Ok(sum_series) => {
                 let sum_of_series: FibContents = sum_series.iter().sum();
                 println!("Sum of series: {}", sum_of_series);
@@ -65,7 +71,6 @@ fn main() {
                 println!("{}", err);
             }
         }
-
     } // block for  allowing the user to display the sum of fibs for a number
 
     println!();
@@ -74,48 +79,31 @@ fn main() {
 
     #[cfg(debug_assertions)]
     {
-        let range_bottom = 0; // range for starting sum checking
-        let range_range = LIMIT - 1; // how many numbers on top of the bottom to do a summation of
-
-        // println!("Big fib number: {}", _fib_specific(1_000_000));
-
-        // loop for showing the series of each natural number
-        for n in range_bottom..=range_bottom + range_range {
-            let sum_series = find_sum_of_fib(n, &fib_vec).unwrap(); // generate the sum series
-            let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
-
-            if n != sum {
-                panic!("sum not equal to fib number to check");
-            } // this should never run under any circumstances, but useful just incase :)
-            println!("Sum of series: {}", sum); // print the sum of the series
-            println!("Series ^: {:?}\n", sum_series); // print the series
-        }
-    } // debug block to print and test each number from 0 to (LIMIT - 1) for being able to be made from sum of fibs
-
-    #[cfg(debug_assertions)]
-    {
         let end = SystemTime::now(); // take a timestamp at the end of the program.
 
         let diff = end.duration_since(_start).unwrap(); // calculate difference of time between beginning of the program and end
 
         println!("Program took {} seconds to run.", diff.as_secs_f64());
-
     } // debug block to show print time of all fib numbers,
 }
 
 /// Request user input until they input a valid FibContents.
 /// Prints message each time they fail :)
+/// Not needed to be tested.
 fn badger_user_for_number(message: &str) -> FibContents {
-    return loop { // number to search for is looped upon until we have a working number of type FibContents
+    return loop {
+        // number to search for is looped upon until we have a working number of type FibContents
         let mut input = String::new();
         println!("{}", message);
         let string_result = stdin().read_line(&mut input); // after requesting user input, read into a buffer with a mutable pointer
         let trim_input = input.trim(); // trim input e.g. user inputs "10", string read would be "10\0" with a null terminator at the end, trimming turns it into "55" so we can parse it.
         let number_result = trim_input.parse::<FibContents>(); // result for parsing the number
         match string_result {
-            Ok(_len) => { // string was able to be read, this check contains length checking
+            Ok(_len) => {
+                // string was able to be read, this check contains length checking
                 match number_result {
-                    Ok(num) => { // number was able to parse into FibContents.
+                    Ok(num) => {
+                        // number was able to parse into FibContents.
                         break num; // break loop and return anonymously the number that we parsed
                     }
                     Err(err) => {
@@ -131,8 +119,11 @@ fn badger_user_for_number(message: &str) -> FibContents {
 }
 
 /// Finds the series of sums of fib numbers to create the given number
-fn find_sum_of_fib(number: FibContents, fib_vec: &FibList) -> Result<Vec<FibContents>,NumberSearchResult> {
-
+/// Tested for whole range.
+fn find_sum_of_fib(
+    number: FibContents,
+    fib_vec: &FibList,
+) -> Result<Vec<FibContents>, NumberSearchResult> {
     {
         // includes:
         // number already is a fib number,
@@ -143,12 +134,12 @@ fn find_sum_of_fib(number: FibContents, fib_vec: &FibList) -> Result<Vec<FibCont
         } // number is a fibonacci number already
         if number >= LIMIT {
             let sum_of_fib: FibContents = fib_vec.iter().sum();
-            if sum_of_fib < number { // nested error return so we can find out why the number failed and display to user. :)
-                return Err(NumberExceededSumOfFib)
+            if sum_of_fib < number {
+                // nested error return so we can find out why the number failed and display to user. :)
+                return Err(NumberExceededSumOfFib);
             } // number is larger than any of the numbers
             return Err(NumberExceededLimit);
         } // number exceeds limit
-
     } // sanity checks, run once only
 
     let mut copy_list = fib_vec.clone(); // a list we can modify throughout the function.
@@ -194,6 +185,7 @@ fn find_sum_of_fib(number: FibContents, fib_vec: &FibList) -> Result<Vec<FibCont
 }
 
 /// Print a number if it exists in the fibonacci list, if not, print another message
+/// Not needed to be tested
 fn print_if_in_fib_series(number: FibContents, fib_vec: &FibList) {
     match find_fib_series(number, fib_vec) {
         Ok(num) => {
@@ -209,6 +201,7 @@ fn print_if_in_fib_series(number: FibContents, fib_vec: &FibList) {
 }
 
 /// Finds a number in the list and returns its index if it exists, error result if no number is present.
+/// Tested
 fn find_fib_series(
     number: FibContents,
     fib_list: &FibList,
@@ -223,6 +216,7 @@ fn find_fib_series(
 }
 
 /// Finds specific fibonacci number given an index, uses BigUint so it can be a massive number
+/// Untested as of now, not needed to be tested either, known to work
 fn _fib_specific(n: usize) -> BigUint {
     let mut a0: BigUint = BigUint::from(0_u32);
     let mut a1: BigUint = BigUint::from(1_u32);
@@ -237,6 +231,7 @@ fn _fib_specific(n: usize) -> BigUint {
 }
 
 /// Create a Fibonacci list of numbers with up to 1000 numbers, comparing each number to limit and returning  if the number would exceed limit
+/// Tested
 fn fib(n: FibContents, limit: FibContents) -> FibList {
     let mut vec = vec![1, 1]; // initialize FibList vector with 1,1
     for i in 2..n {
@@ -248,4 +243,57 @@ fn fib(n: FibContents, limit: FibContents) -> FibList {
         }
     }
     vec
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{fib, find_fib_series, find_sum_of_fib, FibContents, _fib_specific, LIMIT};
+    use num_bigint::BigUint;
+
+    /// This test is fast, checks that find fib series actually locates the correct number in the list of fib numbers.
+    #[test]
+    fn test_find_fib_specific() {
+        let fib_vec = fib(1000, LIMIT);
+
+        for number in &fib_vec {
+            let found_number = find_fib_series(*number, &fib_vec).unwrap();
+            let indexed_number = fib_vec.get(found_number as usize - 1).unwrap();
+            assert_eq!(number, indexed_number);
+            // println!("{}:{}", number,indexed_number);
+        }
+    }
+
+    /// Tests fib(n,limit), short runtime test that checks each number with a known working function that can calculate fib numbers given an index.
+    #[test]
+    fn test_specific_fib_for_list() {
+        let fib_vec = fib(1000, LIMIT); // create a fib list that may or may not work correctly.
+        for (index, number) in fib_vec.iter().enumerate() {
+            let big_uint = BigUint::from(*number); // make a big uint out of the number in this list, for comparison reasons
+            let specific = _fib_specific(index + 1); // run the known working function to take in an index and return a fib number
+            assert_eq!(specific, big_uint); // check numbers
+            println!("{}:{}", big_uint, specific);
+        }
+    }
+
+    /// This test takes a long time to run, and can sometimes hang on an ide, run using bash instead.
+    #[test]
+    fn test_number_range() {
+        let fib_vec = fib(1000, LIMIT);
+
+        let range_bottom = 0; // range for starting sum checking
+        let range_range = LIMIT - 1; // how many numbers on top of the bottom to do a summation of
+
+        // println!("Big fib number: {}", _fib_specific(1_000_000));
+
+        // loop for showing the series of each natural number
+        for n in range_bottom..=range_bottom + range_range {
+            let sum_series = find_sum_of_fib(n, &fib_vec).unwrap(); // generate the sum series
+            let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
+
+            assert_eq!(n, sum); // number being made from sum of series should be equal to the number sent in to the function.
+                                // this should never run under any circumstances, but useful just incase :)
+                                // println!("Sum of series: {}", sum); // print the sum of the series
+                                // println!("Series ^: {:?}\n", sum_series); // print the series
+        }
+    }
 }
