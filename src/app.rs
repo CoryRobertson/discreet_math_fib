@@ -74,7 +74,7 @@ impl eframe::App for TemplateApp {
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Input Panel");
-            ui.style_mut().spacing.slider_width = 300.0;
+            ui.style_mut().spacing.slider_width = 100.0;
             ui.add(egui::Slider::new(&mut self.fib_search_number,1..=999_999).text("Fibonacci search number").smart_aim(false));
 
             ui.add(egui::Slider::new(&mut self.sum_series_number, 0..=999_999).text("Sum series number").smart_aim(false));
