@@ -1,3 +1,4 @@
+
 use num_bigint::BigUint;
 use std::fmt::{Display, Formatter};
 use std::io::stdin;
@@ -256,9 +257,7 @@ pub fn fib(n: FibContents, limit: FibContents) -> FibList {
     vec
 }
 
-#[cfg(test)]
 mod tests {
-    use crate::{fib, find_fib_series, find_sum_of_fib, FibContents, _fib_specific, LIMIT};
     use num_bigint::BigUint;
     use crate::main_old::{_fib_specific, fib, FibContents, find_fib_series, find_sum_of_fib, LIMIT};
 
