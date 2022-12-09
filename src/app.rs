@@ -1,11 +1,11 @@
-use crate::main_old::{fib, FibContents, FibList, find_fib_series, find_sum_of_fib, LIMIT, string_from_fib_list};
+use crate::main_old::{
+    fib, find_fib_series, find_sum_of_fib, string_from_fib_list, FibContents, FibList, LIMIT,
+};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
-
-
     #[serde(skip)]
     fib_list: Option<FibList>,
     #[serde(skip)]
@@ -14,21 +14,16 @@ pub struct TemplateApp {
     sum_series_number: i32,
     #[serde(skip)]
     fib_search_number: i32,
-
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-
-            fib_list: Option::from({
-                fib(1000, LIMIT)
-            }),
-
+            fib_list: Option::from(fib(1000, LIMIT)),
 
             sum_series: None,
             sum_series_number: 0,
-            fib_search_number: 0,
+            fib_search_number: 1,
         }
     }
 }
@@ -75,20 +70,34 @@ impl eframe::App for TemplateApp {
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Input Panel");
             ui.style_mut().spacing.slider_width = 100.0;
-            ui.add(egui::Slider::new(&mut self.fib_search_number,1..=999_999).text("Fibonacci search number").smart_aim(false));
+            ui.add(
+                egui::Slider::new(&mut self.fib_search_number, 1..=999_999)
+                    .text("Fibonacci search number")
+                    .smart_aim(false),
+            );
 
-            ui.add(egui::Slider::new(&mut self.sum_series_number, 0..=999_999).text("Sum series number").smart_aim(false));
+            ui.add(
+                egui::Slider::new(&mut self.sum_series_number, 0..=999_999)
+                    .text("Sum series number")
+                    .smart_aim(false),
+            );
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             match self.fib_list.as_ref() {
                 Some(list) => {
-                    let fib_list_text = format!("Fibonacci list: {}",string_from_fib_list(list));
+                    let fib_list_text = format!(
+                        "Fibonacci list: {}",
+                        string_from_fib_list(list, self.fib_search_number as FibContents)
+                    );
                     ui.label(fib_list_text); // display the fibonacci list to the user
 
                     match find_fib_series(self.fib_search_number as FibContents, list) {
                         Ok(found_index) => {
-                            ui.label(format!("Number searched for found at location: {}", found_index));
+                            ui.label(format!(
+                                "Number searched for found at location: {}",
+                                found_index
+                            ));
                         }
                         Err(err) => {
                             ui.label(format!("{}", err));
@@ -107,18 +116,7 @@ impl eframe::App for TemplateApp {
                 None => {}
             }
 
-
-
             egui::warn_if_debug_build(ui);
         });
-
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally chose either panels OR windows.");
-            });
-        }
     }
 }

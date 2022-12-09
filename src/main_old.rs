@@ -23,13 +23,23 @@ pub enum NumberSearchResult {
     NumberExceededSumOfFib, // number was larger than the sum of the list, making it impossible to make
 }
 
-pub fn string_from_fib_list(list: &FibList) -> String {
+pub fn string_from_fib_list(list: &FibList, selected_number: FibContents) -> String {
     let mut s = String::new();
     for (index, num) in list.iter().enumerate() {
+        // look through each number in the fibonacci list
         if index == list.len() - 1 {
-            s.push_str(&*format!("{}", num.to_string()))
+            // add a comma if we are not at the end of the list
+            if *num == selected_number {
+                // if the number in the list matches the number the user was looking for, highlight it with square brackets.
+                s.push_str(&format!("[{}]", num))
+            } else {
+                s.push_str(&format!("{}", num))
+            }
+        } else if *num == selected_number {
+            // if the number in the list matches the number the user was looking for, highlight it with square brackets.
+            s.push_str(&format!("[{}], ", num))
         } else {
-            s.push_str(&*format!("{}, ", num.to_string()))
+            s.push_str(&format!("{}, ", num))
         }
     }
     s

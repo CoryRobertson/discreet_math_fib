@@ -1,7 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use discreet_math_fib::main_old::{fib, FibContents, LIMIT};
 use num_bigint::BigUint;
-use num_traits::FromPrimitive;
-use discreet_math_fib::main_old::{fib, FibContents, FibList, LIMIT};
 
 fn fib2(n: FibContents) -> Vec<BigUint> {
     let mut vec = vec![BigUint::from(1_u32), BigUint::from(1_u32)]; // initialize FibList vector with 1,1
@@ -30,25 +29,31 @@ fn fib3(nth: usize) -> (BigUint, BigUint) {
 
     if modulo_rem == 1 {
         let summed = c + &d;
-        return (d, summed);
+        (d, summed)
     } else {
-        return (c, d);
+        (c, d)
     }
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("fib 1000, limit ", |b| b.iter(|| {
-        // fibonacci(black_box(20));
-        fib(black_box(1000),black_box(LIMIT));
-    }));
+    c.bench_function("fib 1000, limit ", |b| {
+        b.iter(|| {
+            // fibonacci(black_box(20));
+            fib(black_box(1000), black_box(LIMIT));
+        })
+    });
 
-    c.bench_function("fib2 500", |b| b.iter(|| {
-        fib2(black_box(500));
-    }));
+    c.bench_function("fib2 500", |b| {
+        b.iter(|| {
+            fib2(black_box(500));
+        })
+    });
 
-    c.bench_function("fib3 500", |b| b.iter(|| {
-        fib3(black_box(500));
-    }));
+    c.bench_function("fib3 500", |b| {
+        b.iter(|| {
+            fib3(black_box(500));
+        })
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
