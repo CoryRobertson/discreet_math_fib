@@ -1,9 +1,10 @@
-
+use crate::main_old::NumberSearchResult::{
+    NumberExceededLimit, NumberExceededSumOfFib, NumberNotFound, _NumberFound,
+};
 use num_bigint::BigUint;
 use std::fmt::{Display, Formatter};
 use std::io::stdin;
 use std::mem::replace;
-use crate::main_old::NumberSearchResult::{_NumberFound, NumberExceededLimit, NumberExceededSumOfFib, NumberNotFound};
 
 // limit for fibonacci number calculation imposed by assignment
 pub static LIMIT: u128 = 1_000_000;
@@ -24,11 +25,10 @@ pub enum NumberSearchResult {
 
 pub fn string_from_fib_list(list: &FibList) -> String {
     let mut s = String::new();
-    for (index,num) in list.iter().enumerate() {
+    for (index, num) in list.iter().enumerate() {
         if index == list.len() - 1 {
             s.push_str(&*format!("{}", num.to_string()))
-        }
-        else {
+        } else {
             s.push_str(&*format!("{}, ", num.to_string()))
         }
     }
@@ -167,6 +167,13 @@ pub fn find_sum_of_fib(
                     *copy_list.get(index - 1).unwrap()
                 }
             };
+
+            if copy_list.contains(&sum) && sum != 0 {
+                list_of_sums.push(sum);
+                sum = 0;
+                break;
+            } // check if the number we are looking for is even in the list, if so we can stop looping through entirely.
+
             if current_number >= &sum || (index == copy_list.len() - 1) {
                 // always go to the previous number once we go one number higher than the sum.
                 // if we have found the number in the fibonacci sequence that is larger than the number we are trying to make
@@ -179,11 +186,6 @@ pub fn find_sum_of_fib(
                 break; // this break makes us stop and go back to the beginning of the vector once we have subtracted once, absolutely needed.
             }
         }
-
-        // println!("copy list len: {}", copy_list.len());
-        // println!("copy list: {:?}", copy_list);
-        // println!("sum: {}", sum);
-        // println!("list of sums: {:?}", list_of_sums);
 
         if sum == 0 {
             return Ok(list_of_sums.clone());
@@ -258,8 +260,12 @@ pub fn fib(n: FibContents, limit: FibContents) -> FibList {
 }
 
 mod tests {
+    #![allow(unused_imports)]
+    use crate::main_old::{
+        _fib_specific, fib, find_fib_series, find_sum_of_fib, FibContents, LIMIT,
+    };
     use num_bigint::BigUint;
-    use crate::main_old::{_fib_specific, fib, FibContents, find_fib_series, find_sum_of_fib, LIMIT};
+    use rayon::prelude::*;
 
     /// This test is fast, checks that find fib series actually locates the correct number in the list of fib numbers.
     #[test]
@@ -269,8 +275,7 @@ mod tests {
         for number in &fib_vec {
             let found_number = find_fib_series(*number, &fib_vec).unwrap();
             let indexed_number = fib_vec.get(found_number as usize - 1).unwrap();
-            assert_eq!(number, indexed_number);
-            // println!("{}:{}", number,indexed_number);
+            assert_eq!(number, indexed_number); // compare each number into the fib list to a number in a known list location
         }
     }
 
@@ -281,30 +286,34 @@ mod tests {
         for (index, number) in fib_vec.iter().enumerate() {
             let big_uint = BigUint::from(*number); // make a big uint out of the number in this list, for comparison reasons
             let specific = _fib_specific(index + 1); // run the known working function to take in an index and return a fib number
-            assert_eq!(specific, big_uint); // check numbers
-            println!("{}:{}", big_uint, specific);
+            assert_eq!(specific, big_uint); // check numbers for validity
         }
     }
 
     /// This test takes a long time to run, and can sometimes hang on an ide, run using bash instead.
     #[test]
     fn test_number_range() {
-        let fib_vec = fib(1000, LIMIT);
-
+        let fib_vec = fib(1000, LIMIT); // generate the fib list
         let range_bottom = 0; // range for starting sum checking
-        let range_range = LIMIT - 1; // how many numbers on top of the bottom to do a summation of
+        let range_top = LIMIT - 1; // how many numbers on top of the bottom to do a summation of
 
-        // println!("Big fib number: {}", _fib_specific(1_000_000));
+        // using a parallel iterator speeds up this unit test by a substantial amount.
+        (range_bottom..range_bottom + range_top)
+            .into_par_iter()
+            .for_each(|n| {
+                let sum_series = find_sum_of_fib(n, &fib_vec).unwrap(); // generate the sum series
+                let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
 
-        // loop for showing the series of each natural number
-        for n in range_bottom..=range_bottom + range_range {
-            let sum_series = find_sum_of_fib(n, &fib_vec).unwrap(); // generate the sum series
-            let sum: FibContents = sum_series.iter().sum(); // generate the sum to check if the sum is equal to the series and the number we checked
-
-            assert_eq!(n, sum); // number being made from sum of series should be equal to the number sent in to the function.
-                                // this should never run under any circumstances, but useful just incase :)
-                                // println!("Sum of series: {}", sum); // print the sum of the series
-                                // println!("Series ^: {:?}\n", sum_series); // print the series
-        }
+                for number in &sum_series {
+                    let mut count = 0;
+                    for second_number in &sum_series {
+                        if number == second_number {
+                            count += 1;
+                        }
+                    }
+                    assert_eq!(count, 1); // each number in the sum series appears once and only once
+                }
+                assert_eq!(n, sum); // number being made from sum of series should be equal to the number sent in to the function.
+            });
     }
 }
