@@ -1,7 +1,7 @@
 var cacheName = 'egui-template-pwa';
 var filesToCache = [
-  './',
-  './index.html',
+  //'./',
+  //'./index.html',
   './discreet_math_fib.js',
   './discreet_math_fib_bg.wasm',
 ];
